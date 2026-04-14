@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Emotion Brew — Feel the Music</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="noise"></div>
+<canvas id="bg-canvas"></canvas>
+
+<!-- MINI PLAYER BAR -->
+<div id="player-bar" class="pbar hidden">
+  <div class="pb-l">
+    <div class="pb-vinyl" id="pb-vinyl">
+      <div class="pb-g"></div><div class="pb-h"></div>
+    </div>
+    <div class="pb-info">
+      <div class="pb-song" id="pb-song">—</div>
+      <div class="pb-artist" id="pb-artist">—</div>
+    </div>
+  </div>
+  <div class="pb-c">
+    <button class="pb-sk" onclick="playerPrev()">&#9664;&#9664;</button>
+    <button class="pb-play" id="pb-playbtn" onclick="playerToggle()">&#9654;</button>
+    <button class="pb-sk" onclick="playerNext()">&#9654;&#9654;</button>
+  </div>
+  <div class="pb-r">
+    <span class="pb-lang" id="pb-lang-badge">—</span>
+    <a class="pb-yt" id="pb-yt" href="#" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.8 2 12 2 12 2s-4.8 0-7.3.1c-.6.1-1.9.1-3 1.3C.8 4.2.5 6.2.5 6.2S.2 8.5.2 10.8v2.1c0 2.3.3 4.6.3 4.6s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.2 21.7 12 21.8 12 21.8s4.8 0 7.3-.2c.6-.1 1.9-.1 3-1.2.9-.8 1.2-2.8 1.2-2.8s.3-2.3.3-4.6v-2.1C23.8 8.5 23.5 6.2 23.5 6.2zM9.7 15.5V8.4l8.1 3.6-8.1 3.5z"/></svg>
+      Play on YouTube
+    </a>
+    <button class="pb-x" onclick="closePlayer()">✕</button>
+  </div>
+</div>
+
+<!-- LINK PREVIEW -->
+<div id="lp" class="lp hidden">
+  <div class="lp-art" id="lp-art">
+    <div class="lp-vinyl-sm">
+      <div class="lpvg"></div><div class="lpvh"></div>
+    </div>
+    <div class="lpst s1"></div><div class="lpst s2"></div><div class="lpst s3"></div>
+  </div>
+  <div class="lp-body">
+    <div class="lp-live"><span class="lpd"></span>Preview</div>
+    <div class="lp-sn" id="lp-sn">—</div>
+    <div class="lp-sa" id="lp-sa">—</div>
+    <div class="lp-tags">
+      <span class="lptag" id="lp-genre">—</span>
+      <span class="lptag lptag-lang" id="lp-lang">—</span>
+    </div>
+    <div class="lpwave">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="lphint">▶ Click card to play</div>
+  </div>
+</div>
+
+<main class="app">
+
+  <header class="hdr">
+    <div class="hdr-logo">
+      <svg width="54" height="54" viewBox="0 0 54 54" fill="none">
+        <circle cx="27" cy="27" r="25" stroke="#D47E30" stroke-width="1.2" opacity=".35"/>
+        <circle cx="27" cy="27" r="17" stroke="#8D5A2B" stroke-width=".8" opacity=".22"/>
+        <path d="M16 22h22l-3 14H19L16 22z" stroke="#8D5A2B" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        <path d="M38 25.5h3.5a2.5 2.5 0 0 1 0 5H38" stroke="#D47E30" stroke-width="1.5" fill="none"/>
+        <path d="M21 22c0-3.5 2.5-6 6-6s6 2.5 6 6" stroke="#8D5A2B" stroke-width="1.5" fill="none"/>
+        <path d="M22.5 19Q22 16 22.5 13" stroke="#D47E30" stroke-width="1.1" stroke-linecap="round" opacity=".6"/>
+        <path d="M27 19Q26.5 16 27 13" stroke="#D47E30" stroke-width="1.1" stroke-linecap="round" opacity=".6"/>
+        <path d="M31.5 19Q31 16 31.5 13" stroke="#D47E30" stroke-width="1.1" stroke-linecap="round" opacity=".6"/>
+      </svg>
+    </div>
+    <h1>Emotion Brew</h1>
+    <p class="hdr-sub">Your mood · Your music · Steeped to perfection</p>
+    <div class="hdr-pills">
+      <span class="hp"><i class="hd"></i>SVM Model</span>
+      <span class="hp"><i class="hd hdc"></i>M1 GPU</span>
+      <span class="hp"><i class="hd hdv"></i>FER CNN</span>
+      <span class="hp"><i class="hd hdg"></i>5 Languages</span>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button id="tab-mood" class="tab tab-on" onclick="switchMode('mood')">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.2"/><circle cx="4.3" cy="5.6" r=".75" fill="currentColor"/><circle cx="8.7" cy="5.6" r=".75" fill="currentColor"/><path d="M3.7 8.3Q6.5 10.5 9.3 8.3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+      Mood Pick
+    </button>
+    <button id="tab-text" class="tab" onclick="switchMode('text')">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1.5" width="11" height="2" rx="1" fill="currentColor"/><rect x="1" y="5.5" width="7.5" height="2" rx="1" fill="currentColor"/><rect x="1" y="9.5" width="9" height="2" rx="1" fill="currentColor"/></svg>
+      Write Feeling
+    </button>
+    <button id="tab-face" class="tab" onclick="switchMode('face')">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4" height="4" rx=".8" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="4" height="4" rx=".8" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="11" height="4" rx=".8" stroke="currentColor" stroke-width="1.2"/></svg>
+      Face Scan
+    </button>
+  </nav>
+
+  <!-- LANGUAGE FILTER -->
+  <div class="langbar">
+    <span class="langlbl">🌐 Language:</span>
+    <div class="langpills">
+      <button class="langpill on" data-lang="all" onclick="setLang(this)">All</button>
+      <button class="langpill" data-lang="english" onclick="setLang(this)">🇬🇧 English</button>
+      <button class="langpill" data-lang="hindi" onclick="setLang(this)">🇮🇳 Hindi</button>
+      <button class="langpill" data-lang="telugu" onclick="setLang(this)">Telugu</button>
+      <button class="langpill" data-lang="tamil" onclick="setLang(this)">Tamil</button>
+      <button class="langpill" data-lang="punjabi" onclick="setLang(this)">Punjabi</button>
+    </div>
+  </div>
+
+  <!-- MOOD PANEL -->
+  <section id="panel-mood" class="panel">
+    <p class="peye">How are you feeling right now?</p>
+    <h2 class="ph">Pick Your Mood</h2>
+    <div class="mgrid">
+      <button class="mtile" data-emotion="joy" onclick="pickMood(this)">
+        <div class="mgl"></div><div class="mglow"></div>
+        <span class="moji">😄</span>
+        <strong>Joy</strong><small>Happy · Alive · Bright</small>
+        <div class="mchk">✓</div>
+      </button>
+      <button class="mtile" data-emotion="sadness" onclick="pickMood(this)">
+        <div class="mgl"></div><div class="mglow"></div>
+        <span class="moji">😢</span>
+        <strong>Sadness</strong><small>Soft · Still · Aching</small>
+        <div class="mchk">✓</div>
+      </button>
+      <button class="mtile" data-emotion="anger" onclick="pickMood(this)">
+        <div class="mgl"></div><div class="mglow"></div>
+        <span class="moji">😠</span>
+        <strong>Anger</strong><small>Fierce · Raw · Intense</small>
+        <div class="mchk">✓</div>
+      </button>
+      <button class="mtile" data-emotion="fear" onclick="pickMood(this)">
+        <div class="mgl"></div><div class="mglow"></div>
+        <span class="moji">😨</span>
+        <strong>Fear</strong><small>Tense · Uneasy · Fragile</small>
+        <div class="mchk">✓</div>
+      </button>
+      <button class="mtile" data-emotion="surprise" onclick="pickMood(this)">
+        <div class="mgl"></div><div class="mglow"></div>
+        <span class="moji">😲</span>
+        <strong>Surprise</strong><small>Wide · Wild · Lit up</small>
+        <div class="mchk">✓</div>
+      </button>
+      <button class="mtile" data-emotion="love" onclick="pickMood(this)">
+        <div class="mgl"></div><div class="mglow"></div>
+        <span class="moji">🥰</span>
+        <strong>Love</strong><small>Warm · Deep · Tender</small>
+        <div class="mchk">✓</div>
+      </button>
+    </div>
+    <p class="mhint">✦ Tap a mood · Select language above · Get instant playlist</p>
+  </section>
+
+  <!-- TEXT PANEL -->
+  <section id="panel-text" class="panel hidden">
+    <p class="peye">Pour it out in words</p>
+    <h2 class="ph">Write How You Feel</h2>
+    <div class="txtwrap">
+      <textarea id="txtin" maxlength="300" placeholder="Describe your mood — a sentence, a thought, a feeling…"></textarea>
+      <span class="cc"><span id="cn">0</span>/300</span>
+    </div>
+    <p class="hinttxt">Ctrl+Enter to brew</p>
+    <button class="brewbtn" onclick="analyzeText()">
+      <span class="bbg"></span><span class="bshn"></span>
+      <span>☕ Brew My Playlist</span>
+    </button>
+  </section>
+
+  <!-- FACE PANEL -->
+  <section id="panel-face" class="panel hidden">
+    <p class="peye">No words needed</p>
+    <h2 class="ph">Read My Face</h2>
+    <div class="cambox">
+      <video id="webcam" autoplay playsinline></video>
+      <canvas id="canvas" style="display:none"></canvas>
+      <div class="camui">
+        <div class="cc tl"></div><div class="cc tr"></div>
+        <div class="cc bl"></div><div class="cc br"></div>
+        <div class="cscan" id="cscan"></div>
+        <div class="clbl" id="clbl">Waiting for camera…</div>
+      </div>
+    </div>
+    <div class="facerow">
+      <button class="outbtn" onclick="startCam()">◎ Start Camera</button>
+      <button class="brewbtn face-brew" id="capbtn" onclick="captureFace()" disabled>
+        <span class="bbg"></span><span class="bshn"></span>
+        <span>⬡ Read My Mood</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <div id="loading" class="loading hidden">
+    <div class="lrw">
+      <svg viewBox="0 0 100 100" width="96" height="96">
+        <circle cx="50" cy="50" r="42" class="lrt"/>
+        <circle cx="50" cy="50" r="42" class="lrs"/>
+        <circle cx="50" cy="50" r="28" class="lrt"/>
+        <circle cx="50" cy="50" r="28" class="lrs2"/>
+      </svg>
+      <span class="lico">☕</span>
+    </div>
+    <p class="ltxt">Steeping your vibe…</p>
+    <p class="lsub">Finding the perfect tracks</p>
+  </div>
+
+  <div id="errmsg" class="errmsg hidden"></div>
+
+  <!-- RESULTS -->
+  <div id="results" class="results hidden">
+
+    <div id="ecard" class="ecard">
+      <div class="ecwash"></div>
+      <div class="ecdots"></div>
+      <div class="ecin">
+        <div class="ecl">
+          <div id="e-emoji" class="big-emoji"></div>
+          <div class="donut">
+            <svg viewBox="0 0 80 80" width="78" height="78">
+              <circle cx="40" cy="40" r="32" class="dt"/>
+              <circle cx="40" cy="40" r="32" class="df" id="dfill"/>
+            </svg>
+            <span class="dpct" id="dpct">—</span>
+          </div>
+        </div>
+        <div class="ecr">
+          <div class="ectags">
+            <span class="etag" id="etag1">—</span>
+            <span class="etag" id="etag2">—</span>
+          </div>
+          <div id="ename" class="ename"></div>
+          <div id="edesc" class="edesc"></div>
+          <div class="eqbars">
+            <div class="eqb"></div><div class="eqb"></div>
+            <div class="eqb"></div><div class="eqb"></div><div class="eqb"></div>
+          </div>
+          <hr class="erul">
+          <div class="emeta">
+            <div><p class="ml">Algorithm</p><p class="mv" id="ealgo">—</p></div>
+            <div><p class="ml">Confidence</p><p class="mv" id="econf">—</p></div>
+            <div><p class="ml">Language</p><p class="mv" id="elang">—</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="secdiv">
+      <div class="sdl"></div>
+      <span class="sdtxt">✦ Your Brew Playlist — Click Card to Play ✦</span>
+      <div class="sdl"></div>
+    </div>
+
+    <div id="sgrid" class="sgrid"></div>
+
+    <button class="ghost" onclick="resetApp()">← Start Over</button>
+
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

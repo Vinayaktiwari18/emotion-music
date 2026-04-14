@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store
+.vscode/
+data/train.txt
+data/val.txt
+data/test.txt
+nltk_data/
+notebooks/
+*.log
