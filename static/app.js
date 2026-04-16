@@ -1,278 +1,567 @@
-// ── THREE.JS WARM BACKGROUND ──────────────────────────────────
-(function(){
-  if(typeof THREE==='undefined') return;
-  const cv=document.getElementById('bg-canvas');
-  const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
-  R.setPixelRatio(Math.min(devicePixelRatio,1.5));
-  R.setSize(innerWidth,innerHeight);
-  const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,200);
-  C.position.z=30;
-  const mk=(n,c,sz,op,sp)=>{
-    const g=new THREE.BufferGeometry(),p=new Float32Array(n*3);
-    for(let i=0;i<n*3;i++)p[i]=(Math.random()-.5)*sp;
-    g.setAttribute('position',new THREE.BufferAttribute(p,3));
-    return new THREE.Points(g,new THREE.PointsMaterial({color:c,size:sz,transparent:true,opacity:op}));
-  };
-  S.add(mk(300,0xC87828,.18,.28,100));
-  S.add(mk(120,0xF0C060,.1,.16,120));
-  const rd=[{r:13,c:0xD47E30,x:-17,y:7,z:-20},{r:8,c:0x8D5A2B,x:15,y:-5,z:-15},{r:5,c:0xC87028,x:3,y:13,z:-24}];
-  const rings=rd.map(d=>{
-    const m=new THREE.Mesh(new THREE.TorusGeometry(d.r,.055,8,38),new THREE.MeshBasicMaterial({color:d.c,transparent:true,opacity:.1}));
-    m.position.set(d.x,d.y,d.z);S.add(m);return m;
+// ═══════════════════════════════════════════════════════════════
+// EMOTION BREW — app.js
+// Three.js background · Tab slider · Mood picker · Text/Face ML
+// Language filter · Mini player · Link preview · Accessibility
+// ═══════════════════════════════════════════════════════════════
+
+// ── THREE.JS WARM PARTICLE BACKGROUND ─────────────────────────
+(function initThree() {
+  if (typeof THREE === 'undefined') return;
+
+  const canvas   = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setSize(innerWidth, innerHeight);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 200);
+  camera.position.z = 30;
+
+  // Helper — make a particle cloud
+  function makeCloud(count, color, size, opacity, spread) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * spread;
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    return new THREE.Points(geo, new THREE.PointsMaterial({ color, size, transparent: true, opacity }));
+  }
+
+  const dust  = makeCloud(320, 0xC87828, 0.18, 0.28, 100);
+  const glow  = makeCloud(130, 0xF0C060, 0.10, 0.16, 120);
+  scene.add(dust, glow);
+
+  // Gentle floating rings
+  const ringDefs = [
+    { r: 13, c: 0xD47E30, x: -17, y:  7, z: -20 },
+    { r:  8, c: 0x8D5A2B, x:  15, y: -5, z: -15 },
+    { r:  5, c: 0xC87028, x:   3, y: 13, z: -24 },
+  ];
+  const rings = ringDefs.map(d => {
+    const mesh = new THREE.Mesh(
+      new THREE.TorusGeometry(d.r, 0.055, 8, 38),
+      new THREE.MeshBasicMaterial({ color: d.c, transparent: true, opacity: 0.10 })
+    );
+    mesh.position.set(d.x, d.y, d.z);
+    scene.add(mesh);
+    return mesh;
   });
-  let mx=0,my=0,t=0;
-  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5);my=(e.clientY/innerHeight-.5)});
-  (function loop(){
-    requestAnimationFrame(loop);t+=.003;
-    S.children[0].rotation.y+=.00014;S.children[1].rotation.y-=.0001;
-    rings.forEach((r,i)=>{r.rotation.x+=.0015+i*.0008;r.rotation.z+=.001+i*.0005;r.position.y=rd[i].y+Math.sin(t+i*1.2)*2});
-    C.position.x+=(mx*2-C.position.x)*.018;C.position.y+=(-my*1.5-C.position.y)*.018;
-    C.lookAt(S.position);R.render(S,C);
+
+  let mouseX = 0, mouseY = 0, t = 0;
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX / innerWidth  - 0.5);
+    mouseY = (e.clientY / innerHeight - 0.5);
+  });
+
+  (function loop() {
+    requestAnimationFrame(loop);
+    t += 0.003;
+    dust.rotation.y  +=  0.00014;
+    glow.rotation.y  -= 0.00010;
+    rings.forEach((r, i) => {
+      r.rotation.x += 0.0015 + i * 0.0008;
+      r.rotation.z += 0.0010 + i * 0.0005;
+      r.position.y  = ringDefs[i].y + Math.sin(t + i * 1.2) * 2;
+    });
+    camera.position.x += (mouseX *  2 - camera.position.x) * 0.018;
+    camera.position.y += (-mouseY * 1.5 - camera.position.y) * 0.018;
+    camera.lookAt(scene.position);
+    renderer.render(scene, camera);
   })();
-  window.addEventListener('resize',()=>{C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix();R.setSize(innerWidth,innerHeight)});
+
+  window.addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
 })();
 
-// ── CONSTANTS ─────────────────────────────────────────────────
-const EMOJI={joy:'😄',sadness:'😢',anger:'😠',fear:'😨',surprise:'😲',love:'🥰',neutral:'😐'};
-const DESCS={joy:'Bright energy & upbeat rhythms',sadness:'Soft melodies for quiet moments',anger:'Intense beats & raw power',fear:'Tense atmospheric soundscapes',surprise:'Unexpected electrifying tracks',love:'Warm tender romantic tones',neutral:'Balanced easy-going vibes'};
-const EMOTION_COLORS={joy:'#D97706',sadness:'#3B82F6',anger:'#DC2626',fear:'#7C3AED',surprise:'#EA580C',love:'#DB2777',neutral:'#8D5A2B'};
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+const EMOJI = {
+  joy: '😄', sadness: '😢', anger: '😠',
+  fear: '😨', surprise: '😲', love: '🥰', neutral: '😐',
+};
 
-// ── STATE ──────────────────────────────────────────────────────
-let curMode='mood', camStream=null, lpTimer=null;
-let curLang='all', curEmotion='joy';
-let playlist=[], playIdx=0, isPlaying=false;
+const DESCS = {
+  joy:      'Bright energy & upbeat rhythms',
+  sadness:  'Soft melodies for quiet moments',
+  anger:    'Intense beats & raw power',
+  fear:     'Tense atmospheric soundscapes',
+  surprise: 'Unexpected electrifying tracks',
+  love:     'Warm tender romantic tones',
+  neutral:  'Balanced easy-going vibes',
+};
 
-// ── CHAR COUNTER ───────────────────────────────────────────────
-const txtel=document.getElementById('txtin');
-const cnumel=document.getElementById('cn');
-txtel?.addEventListener('input',()=>{cnumel.textContent=txtel.value.length});
-txtel?.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)analyzeText()});
+const EMOTION_COLOR = {
+  joy: '#D97706', sadness: '#3B82F6', anger: '#DC2626',
+  fear: '#7C3AED', surprise: '#EA580C', love: '#DB2777', neutral: '#8D5A2B',
+};
 
-// ── LANGUAGE FILTER ────────────────────────────────────────────
-function setLang(btn){
-  document.querySelectorAll('.langpill').forEach(p=>p.classList.remove('on'));
-  btn.classList.add('on');
-  curLang=btn.dataset.lang;
-  // Re-fetch if results are visible
-  if(!document.getElementById('results').classList.contains('hidden')){
-    fetchAndShow(curEmotion,curLang);
+const LANG_FLAG = {
+  english: '🇬🇧', hindi: '🇮🇳', telugu: '🕌',
+  tamil: '🌺', punjabi: '🌾',
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let curMode    = 'mood';
+let curLang    = 'all';
+let curEmotion = 'joy';
+let camStream  = null;
+let lpTimer    = null;
+let playlist   = [];
+let playIdx    = 0;
+let isPlaying  = false;
+
+// ── DOM shortcuts ──────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const txtin  = $('txtin');
+const cnEl   = $('cn');
+
+// ═══════════════════════════════════════════════════════════════
+// TAB SLIDER — smooth animated indicator
+// ═══════════════════════════════════════════════════════════════
+function updateTabSlider(mode) {
+  const slider = $('tab-slider');
+  if (!slider) return;
+  const btn    = $('tab-' + mode);
+  if (!btn) return;
+  const nav    = btn.closest('.tabs');
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  slider.style.left   = (btnRect.left - navRect.left - 4) + 'px';
+  slider.style.width  = btnRect.width + 'px';
+}
+
+// ── Run once on load to position slider correctly
+window.addEventListener('load', () => updateTabSlider('mood'));
+
+// ═══════════════════════════════════════════════════════════════
+// CHAR COUNTER
+// ═══════════════════════════════════════════════════════════════
+txtin?.addEventListener('input', () => {
+  cnEl.textContent = txtin.value.length;
+});
+txtin?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) analyzeText();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MODE SWITCH
+// ═══════════════════════════════════════════════════════════════
+function switchMode(mode) {
+  curMode = mode;
+
+  ['mood', 'text', 'face'].forEach(m => {
+    const panel = $('panel-' + m);
+    const tab   = $('tab-' + m);
+    if (panel) panel.classList.toggle('hidden', m !== mode);
+    if (tab) {
+      tab.classList.toggle('tab-on', m === mode);
+      tab.setAttribute('aria-selected', m === mode ? 'true' : 'false');
+    }
+  });
+
+  updateTabSlider(mode);
+  hideResults();
+  hideErr();
+
+  if (mode !== 'face' && camStream) {
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+    const sc = $('cosc');
+    if (sc) sc.classList.remove('on');
   }
 }
 
-// ── MODE SWITCH ────────────────────────────────────────────────
-function switchMode(m){
-  curMode=m;
-  ['mood','text','face'].forEach(x=>{
-    document.getElementById('panel-'+x).classList.toggle('hidden',x!==m);
-    document.getElementById('tab-'+x).classList.toggle('tab-on',x===m);
-  });
-  hideResults();hideErr();
-  if(m!=='face'&&camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;document.getElementById('cscan').classList.remove('on')}
+// ═══════════════════════════════════════════════════════════════
+// LANGUAGE FILTER
+// ═══════════════════════════════════════════════════════════════
+function setLang(btn) {
+  document.querySelectorAll('.lpill').forEach(p => p.classList.remove('lpill-on'));
+  btn.classList.add('lpill-on');
+  curLang = btn.dataset.lang;
+  // If results already showing — re-fetch with new language
+  if (!$('results').classList.contains('hidden')) {
+    fetchAndShow(curEmotion, curLang);
+  }
 }
 
-// ── MOOD PICKER ────────────────────────────────────────────────
-async function pickMood(tile){
-  document.querySelectorAll('.mtile').forEach(t=>t.classList.remove('sel'));
+// ═══════════════════════════════════════════════════════════════
+// MOOD PICKER
+// ═══════════════════════════════════════════════════════════════
+async function pickMood(tile) {
+  document.querySelectorAll('.mc').forEach(c => c.classList.remove('sel'));
   tile.classList.add('sel');
-  const em=tile.dataset.emotion;
-  const moji=tile.querySelector('.moji');
-  moji.style.transform='scale(1.5) rotate(12deg)';
-  setTimeout(()=>moji.style.transform='',300);
-  curEmotion=em;
-  await fetchAndShow(em,curLang,{emotion:em,confidence:100,source:'mood'});
+
+  const emotion = tile.dataset.emotion;
+  curEmotion    = emotion;
+
+  // Bounce animation
+  const emojiEl = tile.querySelector('.mc-em');
+  if (emojiEl) {
+    emojiEl.style.transform = 'scale(1.5) rotate(12deg)';
+    setTimeout(() => { emojiEl.style.transform = ''; }, 320);
+  }
+
+  await fetchAndShow(emotion, curLang, { emotion, confidence: 100, source: 'mood' });
 }
 
-// ── TEXT ANALYSIS ──────────────────────────────────────────────
-async function analyzeText(){
-  const txt=(txtel?.value||'').trim();
-  if(!txt){showErr('Please write something about how you feel.');return}
+// ═══════════════════════════════════════════════════════════════
+// TEXT ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+async function analyzeText() {
+  const text = (txtin?.value || '').trim();
+  if (!text) {
+    showErr('Please write something about how you feel.');
+    return;
+  }
   showLoad();
-  try{
-    const r=await fetch('/predict/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})});
-    const d=await r.json();
-    if(d.error)throw new Error(d.error);
-    curEmotion=d.emotion;
-    await fetchAndShow(d.emotion,curLang,d);
-  }catch(e){hideLoad();showErr('Error: '+e.message)}
-}
-
-// ── FACE ───────────────────────────────────────────────────────
-async function startCam(){
-  try{
-    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
-    document.getElementById('webcam').srcObject=camStream;
-    document.getElementById('cscan').classList.add('on');
-    document.getElementById('clbl').textContent='Camera ready — look naturally';
-    document.getElementById('capbtn').disabled=false;
-  }catch{showErr('Camera access denied — allow camera permission.')}
-}
-async function captureFace(){
-  if(!camStream){showErr('Camera not started.');return}
-  const v=document.getElementById('webcam'),cv=document.getElementById('canvas');
-  cv.width=v.videoWidth;cv.height=v.videoHeight;cv.getContext('2d').drawImage(v,0,0);
-  showLoad();
-  try{
-    const r=await fetch('/predict/face',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:cv.toDataURL('image/jpeg',.85)})});
-    const d=await r.json();
-    if(d.error&&d.confidence===0)throw new Error(d.error);
-    curEmotion=d.emotion;
-    await fetchAndShow(d.emotion,curLang,d);
-  }catch(e){hideLoad();showErr('Error: '+e.message)}
-}
-
-// ── FETCH + SHOW ───────────────────────────────────────────────
-async function fetchAndShow(emotion,language,eData){
-  if(!eData){showLoad();eData={emotion,confidence:100,source:'mood'}}
-  try{
-    const r=await fetch('/recommend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emotion,language})});
-    const d=await r.json();
+  try {
+    const res  = await fetch('/predict/text', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    curEmotion = data.emotion;
+    await fetchAndShow(data.emotion, curLang, data);
+  } catch (e) {
     hideLoad();
-    playlist=d.songs;playIdx=0;
-    renderResults(eData,d.songs);
-  }catch(e){hideLoad();showErr('Could not load recommendations: '+e.message)}
+    showErr('Error: ' + e.message);
+  }
 }
 
-// ── RENDER RESULTS ─────────────────────────────────────────────
-function renderResults(eData,songs){
-  const em=eData.emotion||'joy';
-  const conf=eData.confidence||100;
-  const isMood=eData.source==='mood',isFace=eData.source==='face';
-  const langLabel=curLang==='all'?'All Languages':curLang.charAt(0).toUpperCase()+curLang.slice(1);
+// ═══════════════════════════════════════════════════════════════
+// FACE DETECTION
+// ═══════════════════════════════════════════════════════════════
+async function startCam() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    $('webcam').srcObject = camStream;
+    const sc = $('cosc');
+    if (sc) sc.classList.add('on');
+    const st = $('costi');
+    if (st) st.textContent = 'Camera ready — look naturally';
+    const btn = $('capbtn');
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-disabled'); }
+  } catch (e) {
+    showErr('Camera access denied — allow camera permission in your browser.');
+  }
+}
 
-  document.getElementById('e-emoji').textContent=EMOJI[em]||'🎵';
-  document.getElementById('ename').textContent=em.charAt(0).toUpperCase()+em.slice(1);
-  document.getElementById('edesc').textContent=DESCS[em]||'Curated just for you';
-  document.getElementById('ealgo').textContent=isMood?'Direct Pick':(isFace?'CNN + FER2013':'SVM + TF-IDF');
-  document.getElementById('econf').textContent=conf+'%';
-  document.getElementById('elang').textContent=langLabel;
-  document.getElementById('etag1').textContent=isMood?'Mood':(isFace?'CNN':'SVM');
-  document.getElementById('etag2').textContent=isMood?'Picker':(isFace?'Face':'Text');
+async function captureFace() {
+  if (!camStream) { showErr('Camera not started.'); return; }
+  const video  = $('webcam');
+  const canvas = $('canvas');
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const b64 = canvas.toDataURL('image/jpeg', 0.85);
 
-  const circ=201.1,offset=circ*(1-conf/100);
-  document.getElementById('dpct').textContent=conf+'%';
-  setTimeout(()=>{document.getElementById('dfill').style.strokeDashoffset=offset},80);
+  showLoad();
+  try {
+    const res  = await fetch('/predict/face', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ image: b64 }),
+    });
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const data = await res.json();
+    if (data.error && data.confidence === 0) throw new Error(data.error);
+    curEmotion = data.emotion;
+    await fetchAndShow(data.emotion, curLang, data);
+  } catch (e) {
+    hideLoad();
+    showErr('Error: ' + e.message);
+  }
+}
 
-  const res=document.getElementById('results');
-  res.className='results t-'+em;
+// ═══════════════════════════════════════════════════════════════
+// FETCH + DISPLAY — shared by all three modes
+// ═══════════════════════════════════════════════════════════════
+async function fetchAndShow(emotion, language, eData) {
+  if (!eData) {
+    showLoad();
+    eData = { emotion, confidence: 100, source: 'mood' };
+  } else {
+    showLoad();
+  }
+  try {
+    const res  = await fetch('/recommend', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ emotion, language }),
+    });
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const data = await res.json();
+    playlist   = data.songs || [];
+    playIdx    = 0;
+    hideLoad();
+    renderResults(eData, playlist);
+  } catch (e) {
+    hideLoad();
+    showErr('Could not load recommendations: ' + e.message);
+  }
+}
 
-  const col=EMOTION_COLORS[em]||'#D47E30';
-  document.getElementById('sgrid').innerHTML=songs.map((s,i)=>{
-    const vibe=85+Math.floor(Math.random()*14);
-    const langFlag={english:'🇬🇧',hindi:'🇮🇳',telugu:'🕌',tamil:'🌺',punjabi:'🌾'}[s.language]||'🎵';
-    return `<div class="scard"
-      data-idx="${i}" data-title="${esc(s.song_name)}" data-artist="${esc(s.artist)}"
-      data-genre="${esc(s.genre)}" data-lang="${esc(s.language||'')}"
-      data-yt="${esc(s.youtube||'#')}" data-vibe="${vibe}" data-emotion="${em}"
-      onclick="playCard(${i})"
-      onmouseenter="lpShow(event,this)" onmouseleave="lpHide()" onmousemove="lpMove(event)">
-      <div class="sc-top">
-        <div class="sc-top-bg" style="background:${col}"></div>
-        <span class="sc-num">Track ${String(i+1).padStart(2,'0')}</span>
-        <div class="sc-play-btn">▶</div>
-      </div>
-      <div class="sc-body">
-        <div class="sc-title">${esc(s.song_name)}</div>
-        <div class="sc-artist">${esc(s.artist)}</div>
-        <div class="sc-badges">
-          <span class="sc-genre">${esc(s.genre)}</span>
-          <span class="sc-lang">${langFlag} ${esc(s.language||'')}</span>
+// ═══════════════════════════════════════════════════════════════
+// RENDER RESULTS
+// ═══════════════════════════════════════════════════════════════
+function renderResults(eData, songs) {
+  const em     = eData.emotion   || 'joy';
+  const conf   = eData.confidence || 100;
+  const isMood = eData.source === 'mood';
+  const isFace = eData.source === 'face';
+  const langLabel = curLang === 'all'
+    ? 'All Languages'
+    : (curLang.charAt(0).toUpperCase() + curLang.slice(1));
+
+  // Emotion card
+  $('e-emoji').textContent  = EMOJI[em] || '🎵';
+  $('ename').textContent    = em.charAt(0).toUpperCase() + em.slice(1);
+  $('edesc').textContent    = DESCS[em] || 'Curated just for you';
+  $('ealgo').textContent    = isMood ? 'Direct Pick'  : (isFace ? 'CNN + FER2013' : 'SVM + TF-IDF');
+  $('econf').textContent    = conf + '%';
+  $('elang').textContent    = langLabel;
+  $('ectag1').textContent   = isMood ? 'Mood'   : (isFace ? 'CNN'   : 'SVM');
+  $('ectag2').textContent   = isMood ? 'Picker' : (isFace ? 'Face'  : 'Text');
+
+  // Confidence donut — r=36, circumference ≈ 226.2
+  const circ   = 226.2;
+  const offset = circ * (1 - Math.min(conf, 100) / 100);
+  $('cr-pct').textContent = conf + '%';
+  setTimeout(() => {
+    const fill = $('cr-f');
+    if (fill) fill.style.strokeDashoffset = offset;
+  }, 80);
+
+  // Emotion theme class
+  const results = $('results');
+  results.className = 'results t-' + em;
+
+  // Render song cards with staggered animation
+  const col = EMOTION_COLOR[em] || '#D47E30';
+  $('sgrid').innerHTML = songs.map((s, i) => {
+    const vibe = 85 + Math.floor(Math.random() * 14);
+    const flag = LANG_FLAG[s.language] || '';
+    return `
+      <div class="scard"
+        data-idx="${i}"
+        data-title="${esc(s.song_name)}"
+        data-artist="${esc(s.artist)}"
+        data-genre="${esc(s.genre)}"
+        data-lang="${esc(s.language || '')}"
+        data-yt="${esc(s.youtube || '#')}"
+        data-vibe="${vibe}"
+        data-emotion="${em}"
+        role="listitem"
+        tabindex="0"
+        onclick="playCard(${i})"
+        onkeydown="if(event.key==='Enter'||event.key===' ')playCard(${i})"
+        onmouseenter="lpShow(event, this)"
+        onmouseleave="lpHide()"
+        onmousemove="lpMove(event)"
+        style="animation-delay:${i * 0.055}s"
+        aria-label="Play ${esc(s.song_name)} by ${esc(s.artist)}">
+        <div class="sc-band">
+          <div class="sc-band-bg" style="background:${col}"></div>
+          <span class="sc-num">Track ${String(i + 1).padStart(2, '0')}</span>
+          <div class="sc-btn" aria-hidden="true">▶</div>
         </div>
-      </div>
-    </div>`;
+        <div class="sc-body">
+          <p class="sc-title">${esc(s.song_name)}</p>
+          <p class="sc-artist">${esc(s.artist)}</p>
+          <div class="sc-chips">
+            <span class="sc-genre">${esc(s.genre)}</span>
+            <span class="sc-lang">${flag} ${esc(s.language || '')}</span>
+          </div>
+        </div>
+      </div>`;
   }).join('');
 
-  // Staggered card animation
-  document.querySelectorAll('.scard').forEach((c,i)=>{c.style.animationDelay=(i*.06)+'s'});
-
-  res.classList.remove('hidden');
-  setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),100);
+  results.classList.remove('hidden');
+  setTimeout(() => {
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
-// ── MINI PLAYER ────────────────────────────────────────────────
-function playCard(idx){
-  playIdx=idx;
-  loadPlayer();
-  isPlaying=true;
-  document.getElementById('pb-playbtn').textContent='⏸';
-  document.getElementById('pb-vinyl').classList.add('spinning');
+// ═══════════════════════════════════════════════════════════════
+// MINI PLAYER
+// ═══════════════════════════════════════════════════════════════
+function playCard(idx) {
+  playIdx   = idx;
+  isPlaying = true;
+  loadTrack();
+  openYouTube();
+  setPlayState(true);
 }
 
-function loadPlayer(){
-  const s=playlist[playIdx];
-  if(!s)return;
-  document.getElementById('pb-song').textContent=s.song_name;
-  document.getElementById('pb-artist').textContent=s.artist;
-  document.getElementById('pb-lang-badge').textContent=s.language||'—';
-  document.getElementById('pb-yt').href=s.youtube||'#';
-  const pbar=document.getElementById('player-bar');
-  pbar.classList.remove('hidden');
+function loadTrack() {
+  const s = playlist[playIdx];
+  if (!s) return;
+  $('pb-song').textContent   = s.song_name;
+  $('pb-artist').textContent = s.artist;
+  $('pb-ltag').textContent   = s.language || '—';
+  $('pb-yt').href            = s.youtube  || '#';
+  $('player-bar').classList.remove('hidden');
 }
 
-function playerToggle(){
-  isPlaying=!isPlaying;
-  document.getElementById('pb-playbtn').textContent=isPlaying?'⏸':'▶';
-  document.getElementById('pb-vinyl').classList.toggle('spinning',isPlaying);
-  if(isPlaying){
-    // Open YouTube in new tab
-    const s=playlist[playIdx];
-    if(s&&s.youtube)window.open(s.youtube,'_blank','noopener');
+function setPlayState(playing) {
+  isPlaying = playing;
+  const vinyl  = $('pb-vinyl');
+  const icoP   = document.querySelector('.ico-play');
+  const icoPa  = document.querySelector('.ico-pause');
+  if (vinyl) vinyl.classList.toggle('spinning', playing);
+  if (icoP)  icoP.classList.toggle('hidden',  playing);
+  if (icoPa) icoPa.classList.toggle('hidden', !playing);
+}
+
+function playerToggle() {
+  if (!playlist.length) return;
+  if (!isPlaying) {
+    openYouTube();
+    setPlayState(true);
+  } else {
+    setPlayState(false);
   }
 }
 
-function playerNext(){
-  if(!playlist.length)return;
-  playIdx=(playIdx+1)%playlist.length;
-  loadPlayer();
-  if(isPlaying)window.open(playlist[playIdx].youtube||'#','_blank','noopener');
+function playerNext() {
+  if (!playlist.length) return;
+  playIdx = (playIdx + 1) % playlist.length;
+  loadTrack();
+  if (isPlaying) openYouTube();
 }
 
-function playerPrev(){
-  if(!playlist.length)return;
-  playIdx=(playIdx-1+playlist.length)%playlist.length;
-  loadPlayer();
-  if(isPlaying)window.open(playlist[playIdx].youtube||'#','_blank','noopener');
+function playerPrev() {
+  if (!playlist.length) return;
+  playIdx = (playIdx - 1 + playlist.length) % playlist.length;
+  loadTrack();
+  if (isPlaying) openYouTube();
 }
 
-function closePlayer(){
-  document.getElementById('player-bar').classList.add('hidden');
-  isPlaying=false;
-  document.getElementById('pb-vinyl').classList.remove('spinning');
+function openYouTube() {
+  const s = playlist[playIdx];
+  if (s && s.youtube && s.youtube !== '#') {
+    window.open(s.youtube, '_blank', 'noopener,noreferrer');
+  }
 }
 
-// ── LINK PREVIEW ───────────────────────────────────────────────
-const lp=document.getElementById('lp');
-function lpShow(e,card){
+function closePlayer() {
+  $('player-bar').classList.add('hidden');
+  setPlayState(false);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LINK PREVIEW
+// ═══════════════════════════════════════════════════════════════
+const lpEl = $('lp');
+
+function lpShow(e, card) {
   clearTimeout(lpTimer);
-  document.getElementById('lp-sn').textContent=card.dataset.title;
-  document.getElementById('lp-sa').textContent=card.dataset.artist;
-  document.getElementById('lp-genre').textContent=card.dataset.genre;
-  document.getElementById('lp-lang').textContent=card.dataset.lang;
-  document.getElementById('lp-art').className='lp-art lp-art-'+card.dataset.emotion;
+
+  // Populate
+  $('lp-song').textContent  = card.dataset.title;
+  $('lp-by').textContent    = card.dataset.artist;
+  $('lp-genre').textContent = card.dataset.genre;
+  $('lp-lang').textContent  = (LANG_FLAG[card.dataset.lang] || '') + ' ' + card.dataset.lang;
+
+  // Art tint per emotion
+  const art = $('lp-art');
+  art.className = 'lp-art lp-' + card.dataset.emotion;
+
   lpPos(e);
-  lp.classList.remove('hidden');
-  requestAnimationFrame(()=>lp.classList.add('on'));
-}
-function lpMove(e){lpPos(e)}
-function lpHide(){lp.classList.remove('on');lpTimer=setTimeout(()=>lp.classList.add('hidden'),230)}
-function lpPos(e){
-  const W=258,H=220,P=12;
-  let l=e.clientX+15,t=e.clientY-H/2;
-  if(l+W>innerWidth-P)l=e.clientX-W-15;
-  if(t<P)t=P;
-  if(t+H>innerHeight-P)t=innerHeight-H-P;
-  lp.style.left=l+'px';lp.style.top=t+'px';
+  lpEl.classList.remove('hidden');
+  requestAnimationFrame(() => lpEl.classList.add('on'));
 }
 
-// ── UTILS ──────────────────────────────────────────────────────
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function showLoad(){document.getElementById('loading').classList.remove('hidden');hideResults();hideErr()}
-function hideLoad(){document.getElementById('loading').classList.add('hidden')}
-function hideResults(){document.getElementById('results').classList.add('hidden')}
-function showErr(msg){const el=document.getElementById('errmsg');el.textContent='⚠ '+msg;el.classList.remove('hidden')}
-function hideErr(){document.getElementById('errmsg').classList.add('hidden')}
-function resetApp(){
-  hideResults();hideErr();closePlayer();
-  if(txtel){txtel.value='';cnumel.textContent='0'}
-  document.querySelectorAll('.mtile').forEach(t=>t.classList.remove('sel'));
-  window.scrollTo({top:0,behavior:'smooth'});
+function lpMove(e) {
+  lpPos(e);
 }
+
+function lpHide() {
+  lpEl.classList.remove('on');
+  lpTimer = setTimeout(() => lpEl.classList.add('hidden'), 220);
+}
+
+function lpPos(e) {
+  const W = 256, H = 230, P = 12;
+  let l = e.clientX + 16;
+  let t = e.clientY - H / 2;
+  if (l + W > innerWidth  - P) l = e.clientX - W - 16;
+  if (t < P)                   t = P;
+  if (t + H > innerHeight - P) t = innerHeight - H - P;
+  lpEl.style.left = l + 'px';
+  lpEl.style.top  = t + 'px';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function esc(str) {
+  return String(str)
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#39;');
+}
+
+function showLoad() {
+  $('loading').classList.remove('hidden');
+  hideResults();
+  hideErr();
+}
+
+function hideLoad() {
+  $('loading').classList.add('hidden');
+}
+
+function hideResults() {
+  $('results').classList.add('hidden');
+}
+
+function showErr(msg) {
+  const el = $('errmsg');
+  el.textContent = '⚠ ' + msg;
+  el.classList.remove('hidden');
+  // Auto-dismiss after 6s
+  setTimeout(() => el.classList.add('hidden'), 6000);
+}
+
+function hideErr() {
+  $('errmsg').classList.add('hidden');
+}
+
+function resetApp() {
+  hideResults();
+  hideErr();
+  closePlayer();
+  if (txtin) { txtin.value = ''; cnEl.textContent = '0'; }
+  document.querySelectorAll('.mc').forEach(c => c.classList.remove('sel'));
+  curEmotion = 'joy';
+  playlist   = [];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Expose globals used by inline onclick handlers
+window.switchMode  = switchMode;
+window.setLang     = setLang;
+window.pickMood    = pickMood;
+window.analyzeText = analyzeText;
+window.startCam    = startCam;
+window.captureFace = captureFace;
+window.playCard    = playCard;
+window.playerToggle= playerToggle;
+window.playerNext  = playerNext;
+window.playerPrev  = playerPrev;
+window.closePlayer = closePlayer;
+window.resetApp    = resetApp;
+window.lpShow      = lpShow;
+window.lpHide      = lpHide;
+window.lpMove      = lpMove;
